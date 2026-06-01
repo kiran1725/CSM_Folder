@@ -1,0 +1,337 @@
+/* ============================================
+   AutoCare — Mobile Responsive Styles
+   Add @import './mobile.css' to your App.css
+   ============================================ */
+
+/* ── Viewport safety ── */
+body {
+  overflow-x: hidden;
+}
+
+/* ══════════════════════════════════════════
+   CUSTOMER DASHBOARD — Mobile
+   ══════════════════════════════════════════ */
+
+/* Bottom navigation bar — hidden on desktop */
+.csms-bottom-nav {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(8, 12, 26, 0.98);
+  border-top: 1px solid rgba(56, 189, 248, 0.1);
+  padding: 6px 0 env(safe-area-inset-bottom, 8px);
+  z-index: 200;
+  justify-content: space-around;
+  align-items: center;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.csms-bnav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 6px 10px;
+  border-radius: 10px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 10px;
+  font-family: 'Inter', sans-serif;
+  color: #475569;
+  min-width: 44px;
+  min-height: 44px;
+  justify-content: center;
+  transition: all 0.15s;
+}
+
+.csms-bnav-item.active {
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.1);
+}
+
+.csms-bnav-item:hover {
+  color: #94a3b8;
+}
+
+/* Hamburger — hidden on desktop */
+.csms-hamburger {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(56, 189, 248, 0.12);
+  border-radius: 10px;
+  cursor: pointer;
+  color: #94a3b8;
+  font-size: 20px;
+}
+
+/* Overlay behind mobile sidebar */
+.csms-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 99;
+  backdrop-filter: blur(2px);
+}
+
+/* ══════════════════════════════════════════
+   TABLET — 768px to 1024px
+   ══════════════════════════════════════════ */
+@media (max-width: 1024px) {
+  .csms-sidebar {
+    width: 200px;
+  }
+  .csms-main {
+    margin-left: 200px;
+    padding: 20px;
+  }
+  .csms-grid {
+    grid-template-columns: 1fr 300px;
+    gap: 12px;
+  }
+  .csms-kpi-grid {
+    gap: 10px;
+  }
+}
+
+/* ══════════════════════════════════════════
+   MOBILE — below 768px
+   ══════════════════════════════════════════ */
+@media (max-width: 768px) {
+
+  /* Hide desktop sidebar, show hamburger */
+  .csms-sidebar {
+    transform: translateX(-100%);
+    transition: transform 0.25s ease;
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    z-index: 100;
+    width: 240px;
+    box-shadow: 4px 0 30px rgba(0, 0, 0, 0.6);
+  }
+  .csms-sidebar.open {
+    transform: translateX(0);
+  }
+  .csms-overlay.active {
+    display: block;
+  }
+  .csms-hamburger {
+    display: flex;
+  }
+
+  /* Main content fills full width */
+  .csms-main {
+    margin-left: 0;
+    padding: 16px 14px 90px;
+  }
+
+  /* Hide desktop search bar — use icon instead */
+  .csms-search {
+    display: none;
+  }
+
+  /* Topbar: tighter */
+  .csms-topbar {
+    margin-bottom: 16px;
+  }
+  .csms-topbar h1 {
+    font-size: 16px !important;
+  }
+  .csms-topbar p {
+    font-size: 11px !important;
+  }
+
+  /* Hero: simpler layout, no floating car */
+  .csms-hero {
+    padding: 20px;
+    border-radius: 14px;
+    margin-bottom: 14px;
+  }
+  .csms-hero-title {
+    font-size: clamp(17px, 5vw, 22px) !important;
+  }
+  .csms-hero-car {
+    display: none;
+  }
+
+  /* KPI: 3 columns still work on mobile */
+  .csms-kpi-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+  .csms-kpi {
+    padding: 12px;
+    gap: 10px;
+    border-radius: 12px;
+  }
+  .csms-kpi-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+  }
+  .csms-kpi-val {
+    font-size: 20px !important;
+  }
+  .csms-kpi-label {
+    font-size: 10px !important;
+  }
+
+  /* Content grid: single column */
+  .csms-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  /* Cards */
+  .csms-card {
+    padding: 14px;
+    border-radius: 12px;
+    margin-bottom: 12px;
+  }
+
+  /* Bottom nav: show */
+  .csms-bottom-nav {
+    display: flex;
+  }
+
+  /* Avatar text hidden on mobile */
+  .csms-topbar-user-name,
+  .csms-topbar-user-role {
+    display: none;
+  }
+
+  /* Prevent overflowing appointment pills */
+  .csms-status-pill {
+    font-size: 9px !important;
+    padding: 2px 7px !important;
+  }
+}
+
+/* ══════════════════════════════════════════
+   ADMIN PANEL — Mobile
+   ══════════════════════════════════════════ */
+
+/* Admin sidebar slide-in */
+@media (max-width: 768px) {
+
+  .admin-sidebar {
+    transform: translateX(-100%);
+    transition: transform 0.25s ease;
+    position: fixed !important;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    z-index: 300;
+    width: 240px !important;
+    box-shadow: 4px 0 30px rgba(0, 0, 0, 0.5);
+  }
+  .admin-sidebar.open {
+    transform: translateX(0);
+  }
+  .admin-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 299;
+  }
+  .admin-overlay.active {
+    display: block;
+  }
+
+  .admin-main {
+    margin-left: 0 !important;
+    padding: 16px 14px !important;
+  }
+
+  .admin-hamburger {
+    display: flex !important;
+  }
+
+  /* Stat row: 2 cols on mobile instead of 5 */
+  .admin-stats-row {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
+  /* Tables: horizontal scroll wrapper */
+  .admin-table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border-radius: 12px;
+  }
+  .admin-table-wrap table {
+    min-width: 580px;
+  }
+
+  /* Page title */
+  .admin-page-title {
+    font-size: 18px !important;
+  }
+
+  /* Add button: shrink on mobile */
+  .admin-add-btn span {
+    display: none;
+  }
+  .admin-add-btn {
+    padding: 10px 14px !important;
+  }
+
+  /* Search: full width on mobile */
+  .admin-search-bar {
+    width: 100% !important;
+    max-width: none !important;
+  }
+
+  /* Filters: stack on mobile */
+  .admin-filter-row {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 8px !important;
+  }
+  .admin-filter-row select {
+    width: 100%;
+  }
+}
+
+/* ══════════════════════════════════════════
+   SHARED MOBILE UX IMPROVEMENTS
+   ══════════════════════════════════════════ */
+
+/* All buttons: minimum 44×44px tap target */
+button, .btn, [role="button"] {
+  min-height: 44px;
+}
+
+/* Prevent text selection on interactive elements */
+button, nav, .csms-bnav-item, .csms-nav-item {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Smooth scrolling on iOS */
+.csms-main, .admin-main {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Form inputs on mobile: prevent zoom on focus */
+input, select, textarea {
+  font-size: 16px !important; /* iOS zooms in if < 16px */
+}
+
+@media (min-width: 769px) {
+  /* Restore smaller font on desktop */
+  input, select, textarea {
+    font-size: 13px !important;
+  }
+}
