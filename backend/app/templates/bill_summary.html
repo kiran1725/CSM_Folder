@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bill Summary - CarHub Connect</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Google Fonts (Inter) -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0a0f1a;
+            color: #e2e8f0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .summary-card {
+            background: #0d1521;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            max-width: 600px;
+            width: 100%;
+            overflow: hidden;
+            transition: transform 0.3s ease;
+        }
+        .summary-card:hover {
+            transform: translateY(-2px);
+        }
+        .card-header-custom {
+            background: linear-gradient(135deg, #1d4ed8, #3b82f6);
+            padding: 24px;
+            text-align: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .card-header-custom h2 {
+            font-weight: 700;
+            font-size: 22px;
+            margin: 0;
+            color: #ffffff;
+        }
+        .card-header-custom p {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.8);
+            margin: 4px 0 0 0;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+        .card-body-custom {
+            padding: 32px;
+        }
+        .section-title {
+            font-size: 11px;
+            font-weight: 700;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px 24px;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 12px;
+            padding: 18px;
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            margin-bottom: 24px;
+        }
+        .info-item label {
+            display: block;
+            font-size: 11px;
+            color: #64748b;
+            margin-bottom: 2px;
+        }
+        .info-item value {
+            display: block;
+            font-size: 13.5px;
+            font-weight: 600;
+            color: #f1f5f9;
+        }
+        .charge-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            font-size: 13.5px;
+            color: #94a3b8;
+        }
+        .charge-row.total {
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+            color: #f1f5f9;
+            font-weight: 700;
+            font-size: 16px;
+        }
+        .charge-row.total .price {
+            color: #3b82f6;
+            font-size: 20px;
+        }
+        .btn-pay {
+            background: #3b82f6;
+            color: #ffffff;
+            border: none;
+            border-radius: 12px;
+            padding: 14px;
+            font-weight: 700;
+            width: 100%;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 14px rgba(59, 130, 246, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .btn-pay:hover {
+            background: #1d4ed8;
+            color: #ffffff;
+            box-shadow: 0 6px 20px rgba(29, 78, 216, 0.5);
+        }
+        .btn-back {
+            background: transparent;
+            color: #64748b;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 12px;
+            padding: 12px;
+            font-weight: 600;
+            font-size: 13px;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+        .btn-back:hover {
+            color: #e2e8f0;
+            background: rgba(255, 255, 255, 0.02);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+    </style>
+</head>
+<body>
+
+<div class="summary-card">
+    <div class="card-header-custom">
+        <h2>Service Bill Summary</h2>
+        <p>Booking ID: #SR-{{ "%04d" | format(service.id) }}</p>
+    </div>
+    <div class="card-body-custom">
+        <!-- Customer & Vehicle Info -->
+        <div class="section-title">
+            <i data-lucide="user" style="width: 13px; height: 13px;"></i> Details & Booking Info
+        </div>
+        <div class="info-grid">
+            <div class="info-item">
+                <label>Customer Name</label>
+                <value>{{ customer.name }}</value>
+            </div>
+            <div class="info-item">
+                <label>Customer ID</label>
+                <value>CUST-{{ "%04d" | format(customer.id) }}</value>
+            </div>
+            <div class="info-item">
+                <label>Vehicle Model</label>
+                <value>{{ car.car_brand }} {{ car.car_model }}</value>
+            </div>
+            <div class="info-item">
+                <label>Vehicle Number</label>
+                <value>{{ car.car_number }}</value>
+            </div>
+            <div class="info-item">
+                <label>Service Type</label>
+                <value>{{ service.service_type }}</value>
+            </div>
+            <div class="info-item">
+                <label>Service Date</label>
+                <value>{{ service.request_date.strftime('%d-%b-%Y') if service.request_date else '' }}</value>
+            </div>
+        </div>
+
+        <!-- Bill Breakdown -->
+        <div class="section-title">
+            <i data-lucide="receipt" style="width: 13px; height: 13px;"></i> Charges Breakdown
+        </div>
+        <div class="mb-4 px-2">
+            <div class="charge-row">
+                <span>Service Charges (Base)</span>
+                <span>₹ {{ "{:,.2f}".format(service_charges) }}</span>
+            </div>
+            <div class="charge-row">
+                <span>Additional Charges</span>
+                <span>₹ {{ "{:,.2f}".format(additional_charges) }}</span>
+            </div>
+            <div class="charge-row">
+                <span>GST / Taxes (18%)</span>
+                <span>₹ {{ "{:,.2f}".format(taxes) }}</span>
+            </div>
+            <div class="charge-row total">
+                <span>Total Amount Due</span>
+                <span class="price">₹ {{ "{:,.2f}".format(total_amount) }}</span>
+            </div>
+        </div>
+
+        <!-- Buttons -->
+        <div class="d-flex flex-column gap-3 mt-4">
+            <button onclick="proceedToCheckout()" class="btn-pay">
+                <i data-lucide="lock" style="width: 16px; height: 16px;"></i> Pay Now (Securely)
+            </button>
+            <div class="d-grid grid-columns-2 gap-2 d-md-flex justify-content-between">
+                <button onclick="downloadBillDummy()" class="btn-back flex-grow-1">
+                    <i data-lucide="download" style="width: 14px; height: 14px;"></i> Download Bill
+                </button>
+                <button onclick="goBack()" class="btn-back flex-grow-1">
+                    <i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i> Back to Dashboard
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Initialize Lucide Icons
+    lucide.createIcons();
+
+    const serviceId = "{{ service.id }}";
+    const token = "{{ token }}";
+
+    function proceedToCheckout() {
+        window.location.href = `/payments/checkout?service_id=${serviceId}&token=${token}`;
+    }
+
+    function downloadBillDummy() {
+        alert("Bill summary downloaded! Ready for browser printing. For the full final invoice, please complete the payment.");
+        window.print();
+    }
+
+    function goBack() {
+        // Redirect back to the React dashboard (port 5173 or default root)
+        window.location.href = `http://localhost:5173/dashboard`;
+    }
+</script>
+</body>
+</html>

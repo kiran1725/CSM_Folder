@@ -15,20 +15,10 @@ class ServiceStatus(str, Enum):
     IN_PROGRESS = "IN_PROGRESS"
     COMPLETED = "COMPLETED"
     CANCELLED = "CANCELLED"
-
-
-class PaymentStatus(str, Enum):
-    PENDING = "PENDING"
     PAID = "PAID"
-    FAILED = "FAILED"
-    REFUNDED = "REFUNDED"
 
 
-class PaymentMethod(str, Enum):
-    CREDIT_DEBIT_CARD = "CREDIT_DEBIT_CARD"
-    UPI = "UPI"
-    NET_BANKING = "NET_BANKING"
-    DIGITAL_WALLET = "DIGITAL_WALLET"
+from app.schemas.payment import PaymentStatus, PaymentMethod
 
 
 # ─── Auth / User ─────────────────────────────────────────
@@ -105,69 +95,7 @@ class ServiceStatusUpdate(BaseModel):
     status: ServiceStatus
 
 
-# ─── Payment ─────────────────────────────────────────────
-class ServiceLineItem(BaseModel):
-    label: str
-    amount: float
-
-
-class PaymentCreate(BaseModel):
-    service_request_id: Optional[int] = None
-    service_breakdown: Optional[List[ServiceLineItem]] = None
-    subtotal: float
-    gst_rate: float = 18.0
-    gst_amount: float
-    discount: float = 0.0
-    total_amount: float
-    payment_method: Optional[PaymentMethod] = None
-    notes: Optional[str] = None
-
-
-class PaymentUpdate(BaseModel):
-    payment_method: Optional[PaymentMethod] = None
-    payment_status: Optional[PaymentStatus] = None
-    notes: Optional[str] = None
-
-
-class PaymentOut(BaseModel):
-    id: int
-    invoice_number: str
-    user_id: int
-    service_request_id: Optional[int] = None
-    service_breakdown: Optional[List[ServiceLineItem]] = None
-    subtotal: float
-    gst_rate: float
-    gst_amount: float
-    discount: float
-    total_amount: float
-    payment_method: Optional[PaymentMethod] = None
-    payment_status: PaymentStatus
-    paid_at: Optional[datetime] = None
-    created_at: datetime
-    notes: Optional[str] = None
-    car: Optional[CarOut] = None
-    service_type: Optional[str] = None
-
-    class Config:
-        from_attributes = True
-
-
-# ─── Saved Card ──────────────────────────────────────────
-class SavedCardCreate(BaseModel):
-    card_type: str
-    last4: str
-    expiry: str
-    name_on_card: Optional[str] = None
-    is_default: bool = False
-
-
-class SavedCardOut(BaseModel):
-    id: int
-    card_type: str
-    last4: str
-    expiry: str
-    name_on_card: Optional[str] = None
-    is_default: bool
-
-    class Config:
-        from_attributes = True
+from app.schemas.payment import (
+    ServiceLineItem, PaymentCreate, PaymentUpdate, PaymentOut,
+    SavedCardCreate, SavedCardOut
+)

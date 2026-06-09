@@ -1,7 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.database import engine, Base
-from app.api import auth, cars, service_requests, admin, payments
+from app.api import auth, cars, service_requests, admin
+from app.routers import payments
 from app.models import models
 
 # Create all database tables
