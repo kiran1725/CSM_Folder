@@ -11,3 +11,4 @@ cryptography
 email-validator
 jinja2
 razorpay
+reportlab
