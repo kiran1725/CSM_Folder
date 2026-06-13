@@ -10,3 +10,4 @@ python-multipart
 cryptography
 email-validator
 jinja2
+razorpay
