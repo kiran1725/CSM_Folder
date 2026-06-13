@@ -32,19 +32,16 @@ export const serviceRequestService = {
 };
 
 export const paymentService = {
-  initiate: (data) => api.post('/payments/initiate', data),
-  pay: (paymentId, data) => api.patch(`/payments/${paymentId}/pay`, data),
-  getHistory: () => api.get('/payments/history'),
-  getById: (id) => api.get(`/payments/${id}`),
-  getSavedCards: () => api.get('/payments/saved-cards'),
-  addSavedCard: (data) => api.post('/payments/saved-cards', data),
-  deleteCard: (id) => api.delete(`/payments/saved-cards/${id}`),
-  setDefaultCard: (id) => api.patch(`/payments/saved-cards/${id}/set-default`),
+  getPayments:   ()           => api.get('/payments/'),
+  createPayment: (data)       => api.post('/payments/', data),
+  updatePayment: (id, data)   => api.patch(`/payments/${id}`, data),   // ← marks as PAID after Razorpay
+  deletePayment: (id)         => api.delete(`/payments/${id}`),
+  getPaymentById:(id)         => api.get(`/payments/${id}`),
 };
 
 export const adminService = {
   getAllUsers: () => api.get('/admin/users'),
-  getAllCars: () => api.get('/admin/cars'),
+  getAllCars:  () => api.get('/admin/cars'),
 };
 
 export default api;

@@ -45,6 +45,7 @@ const useToast = () => {
 const METHOD_LABELS = { CREDIT_DEBIT_CARD: 'Credit / Debit Card', UPI: 'UPI', NET_BANKING: 'Net Banking', DIGITAL_WALLET: 'Digital Wallet' };
 const METHOD_SUBLABELS = { CREDIT_DEBIT_CARD: 'Visa, MasterCard, Rupay & more', UPI: 'Pay using any UPI app', NET_BANKING: 'All major banks supported', DIGITAL_WALLET: 'Pay using Paytm, PhonePe, Google Pay & more' };
 const SERVICE_PRICES = { 'General Service': 2499, 'Oil Change': 899, 'Brake Service': 699, 'Brake Inspection': 699, 'Engine Repair': 1999, 'Engine Check': 999, 'Tire Change': 599, 'AC Service': 999 };
+const RAZORPAY_KEY_ID = 'rzp_test_SxekrXowMq4G6Z';
 const GST_RATE = 18;
 const NAV_ITEMS = [
   { icon: LayoutDashboard, label: 'Dashboard',       path: '/dashboard' },
@@ -72,7 +73,7 @@ const Sidebar = ({ active, onNavigate, onLogout }) => (
     <div style={{ padding: '24px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
         <div style={{ width: '36px', height: '36px', background: 'linear-gradient(135deg,#3b82f6,#1d4ed8)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Car size={20} color="#fff" /></div>
-        <div><div style={{ fontSize: '14px', fontWeight: '700', color: '#fff' }}>AutoCare</div><div style={{ fontSize: '10px', color: '#64748b', letterSpacing: '1px', textTransform: 'uppercase' }}>Service Center</div></div>
+        <div><div style={{ fontSize: '14px', fontWeight: '700', color: '#fff' }}>CarHub Connect</div><div style={{ fontSize: '10px', color: '#64748b', letterSpacing: '1px', textTransform: 'uppercase' }}>All Your Car Needs in One Hub</div></div>
       </div>
     </div>
     <nav style={{ flex: 1, padding: '16px 12px', display: 'flex', flexDirection: 'column', gap: '2px', overflowY: 'auto' }}>
@@ -117,14 +118,131 @@ const CreatePaymentModal = ({ cars, requests, onClose, onCreate, toast }) => {
   const total      = subtotal + gstAmount;
   const canProceed = selectedRequest !== '';
 
+  const loadRazorpay = () =>
+    new Promise(resolve => {
+      if (window.Razorpay) return resolve(true);
+      const s = document.createElement('script');
+      s.src = 'https://checkout.razorpay.com/v1/checkout.js';
+      s.onload = () => resolve(true);
+      s.onerror = () => resolve(false);
+      document.body.appendChild(s);
+    });
+
+  // Map our method keys → Razorpay method config
+  const getRazorpayMethodConfig = (method) => {
+    switch (method) {
+      case 'CREDIT_DEBIT_CARD':
+        return { method: 'card' };
+      case 'UPI':
+        return { method: 'upi' };
+      case 'NET_BANKING':
+        return { method: 'netbanking' };
+      case 'DIGITAL_WALLET':
+        return { method: 'wallet' };
+      default:
+        return {};
+    }
+  };
+
+  const savePaymentToBackend = async (razorpayPaymentId, method) => {
+    await onCreate({
+      service_request_id: parseInt(selectedRequest),
+      service_breakdown: lineItems,
+      subtotal,
+      gst_rate: GST_RATE,
+      gst_amount: gstAmount,
+      discount: 0,
+      total_amount: total,
+      payment_method: method,
+      razorpay_payment_id: razorpayPaymentId,
+    });
+  };
+
   const handleSubmit = async () => {
     if (!canProceed) return;
     setSubmitting(true);
     try {
-      await onCreate({ service_request_id: parseInt(selectedRequest), service_breakdown: lineItems, subtotal, gst_rate: GST_RATE, gst_amount: gstAmount, discount: 0, total_amount: total, payment_method: selectedMethod });
-      onClose();
-    } catch { toast.error('Failed to create payment.'); }
-    finally { setSubmitting(false); }
+      const loaded = await loadRazorpay();
+      if (!loaded) {
+        toast.error('Failed to load Razorpay. Check your internet connection.');
+        setSubmitting(false);
+        return;
+      }
+
+      const req = requests.find(r => String(r.id) === String(selectedRequest));
+
+      const options = {
+        key: RAZORPAY_KEY_ID,
+        amount: total * 100,
+        currency: 'INR',
+        name: 'CarHub Connect',
+        description: req?.service_type || 'Auto Service Payment',
+        image: 'https://ui-avatars.com/api/?name=CarHub+Connect&background=3b82f6&color=fff&size=128',
+        config: {
+          display: {
+            ...(selectedMethod === 'CREDIT_DEBIT_CARD' && {
+              blocks: { card: { name: 'Pay with Card', instruments: [{ method: 'card' }] } },
+              sequence: ['block.card'],
+              preferences: { show_default_blocks: false },
+            }),
+            ...(selectedMethod === 'UPI' && {
+              blocks: { upi: { name: 'Pay via UPI', instruments: [{ method: 'upi' }] } },
+              sequence: ['block.upi'],
+              preferences: { show_default_blocks: false },
+            }),
+            ...(selectedMethod === 'NET_BANKING' && {
+              blocks: { nb: { name: 'Pay via Net Banking', instruments: [{ method: 'netbanking' }] } },
+              sequence: ['block.nb'],
+              preferences: { show_default_blocks: false },
+            }),
+            ...(selectedMethod === 'DIGITAL_WALLET' && {
+              blocks: { wallet: { name: 'Pay via Wallet', instruments: [{ method: 'wallet' }] } },
+              sequence: ['block.wallet'],
+              preferences: { show_default_blocks: false },
+            }),
+          },
+        },
+        handler: async (response) => {
+          try {
+            await savePaymentToBackend(response.razorpay_payment_id, selectedMethod);
+            toast.success(`✅ Payment of ₹${total.toLocaleString('en-IN')} successful!`);
+            onClose();
+          } catch {
+            toast.error('Payment done but failed to save. Note your Payment ID: ' + response.razorpay_payment_id);
+          }
+        },
+        prefill: { name: '', email: '', contact: '' },
+        notes: {
+          service_type: req?.service_type || '',
+          service_request_id: String(selectedRequest),
+        },
+        theme: {
+          color: selectedMethod === 'CREDIT_DEBIT_CARD' ? '#3b82f6'
+               : selectedMethod === 'UPI'               ? '#8b5cf6'
+               : selectedMethod === 'NET_BANKING'       ? '#10b981'
+               :                                          '#f59e0b',
+        },
+        modal: {
+          backdropclose: false,
+          escape: true,
+          ondismiss: () => {
+            toast.warning('Payment cancelled.');
+            setSubmitting(false);
+          },
+        },
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.on('payment.failed', (resp) => {
+        toast.error(`Payment failed: ${resp.error?.description || 'Unknown error'}`);
+        setSubmitting(false);
+      });
+      rzp.open();
+      setSubmitting(false);
+    } catch (err) {
+      toast.error('Something went wrong. Please try again.');
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -346,6 +464,14 @@ const PaymentDetailModal = ({ payment, onClose }) => {
               <span style={{ fontSize: '12px', color: '#94a3b8' }}>{new Date(payment.paid_at).toLocaleString('en-IN')}</span>
             </div>
           )}
+          {(payment.payment_status === 'PAID' || payment.payment_status === 'SUCCESS') && (
+            <button
+              onClick={() => window.open(`http://localhost:8000/payments/invoice/${payment.id}/pdf?token=${localStorage.getItem('token')}`, '_blank')}
+              style={{ border: 'none', borderRadius: '10px', cursor: 'pointer', fontWeight: '600', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', width: '100%', padding: '10px', background: '#3b82f6', color: '#fff', fontSize: '12.5px', marginTop: '16px' }}
+            >
+              Download PDF Invoice
+            </button>
+          )}
         </div>
       </motion.div>
     </motion.div>
@@ -380,7 +506,15 @@ const Payments = () => {
   };
 
   const handleCreate = async (payload) => {
-    await paymentService.createPayment(payload);
+    // 1. Create payment record
+    const res = await paymentService.createPayment(payload);
+    const paymentId = res?.data?.id;
+    // 2. If Razorpay payment_id present → mark as PAID immediately
+    if (paymentId && payload.razorpay_payment_id) {
+      try {
+        await paymentService.updatePayment(paymentId, { payment_status: 'PAID' });
+      } catch (_) { /* non-fatal */ }
+    }
     toast.success('Payment recorded successfully!');
     await fetchAll();
   };

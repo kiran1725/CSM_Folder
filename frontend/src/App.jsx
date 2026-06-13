@@ -5,7 +5,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import AdminDashboard from './pages/AdminDashboard';
-import PaymentPage from './pages/PaymentPage';
+import PaymentPage from './pages/Payments';
 import './index.css';
 
 const ProtectedRoute = ({ children, role }) => {

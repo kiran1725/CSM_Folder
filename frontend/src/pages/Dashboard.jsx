@@ -94,6 +94,7 @@ const Dashboard = () => {
   const [payInvoiceCar, setPayInvoiceCar] = useState(null);
   const [processingPayment, setProcessingPayment] = useState(false);
   const [paymentSuccess, setPaymentSuccess] = useState(null);
+  const [payments, setPayments] = useState([]);
   // Card form
   const [cardForm, setCardForm] = useState({ number: '', name: '', expiry: '', cvv: '' });
   const [showCvv, setShowCvv] = useState(false);
@@ -129,8 +130,14 @@ const Dashboard = () => {
 
   const fetchData = async () => {
     try {
-      const [carsRes, reqsRes] = await Promise.all([carService.getCars(), serviceRequestService.getRequests()]);
-      setCars(carsRes.data); setRequests(reqsRes.data);
+      const [carsRes, reqsRes, paymentsRes] = await Promise.all([
+        carService.getCars(),
+        serviceRequestService.getRequests(),
+        api.get('/payments/').catch(() => ({ data: [] }))
+      ]);
+      setCars(carsRes.data);
+      setRequests(reqsRes.data);
+      setPayments(paymentsRes.data || []);
       if (carsRes.data.length && !payInvoiceCar) setPayInvoiceCar(carsRes.data[0]);
     } catch { toast.error('Failed to load data. Please refresh.'); }
     finally { setLoading(false); }
@@ -555,6 +562,25 @@ const Dashboard = () => {
           </div>
         </div>
 
+        {/* Payment Summary Stats inside Invoices Section */}
+        {activeNav === 'Invoices & Bills' && (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginBottom: '20px' }}>
+            {[
+              { label: 'Total Paid', value: `₹${(payments.filter(p => p.payment_status === 'PAID' || p.payment_status === 'SUCCESS').reduce((s, p) => s + p.total_amount, 0)).toLocaleString('en-IN')}`, icon: CheckCircle, color: '#10b981', bg: 'rgba(16,185,129,0.1)' },
+              { label: 'Pending Payments', value: `₹${(payments.filter(p => p.payment_status === 'PENDING').reduce((s, p) => s + p.total_amount, 0)).toLocaleString('en-IN')}`, icon: Clock, color: '#f59e0b', bg: 'rgba(245,158,11,0.1)' },
+              { label: 'Paid Invoices', value: payments.filter(p => p.payment_status === 'PAID' || p.payment_status === 'SUCCESS').length, icon: Receipt, color: '#3b82f6', bg: 'rgba(59,130,246,0.1)' },
+            ].map(({ label, value, icon: Icon, color, bg }) => (
+              <div key={label} style={{ background: '#0d1521', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '16px', padding: '16px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{ width: '36px', height: '36px', background: bg, borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Icon size={18} color={color} /></div>
+                <div>
+                  <div style={{ fontSize: '16px', fontWeight: '700', color: '#f1f5f9', lineHeight: 1 }}>{value}</div>
+                  <div style={{ fontSize: '11px', color: '#64748b', marginTop: '4px' }}>{label}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
         {/* Quick Access + Invoices */}
         <div id="invoices-section" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '24px' }}>
           <div style={{ background: '#0d1521', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '16px', padding: '20px' }}>
@@ -572,23 +598,40 @@ const Dashboard = () => {
           <div style={{ background: '#0d1521', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '16px', padding: '20px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
               <h3 style={{ fontSize: '14px', fontWeight: '600', color: '#e2e8f0' }}>Recent Invoices</h3>
-              <span style={{ fontSize: '12px', color: '#3b82f6', cursor: 'pointer' }} onClick={() => toast.info('Invoice download coming soon!')}>View All</span>
+              <span style={{ fontSize: '12px', color: '#3b82f6', cursor: 'pointer' }} onClick={() => handleNavClick('Payments')}>View All</span>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              {requests.filter(r => r.status === 'COMPLETED').slice(0, 3).map((req) => (
-                <motion.div key={req.id} whileHover={{ x: 3 }} onClick={() => toast.info(`Invoice #${String(req.id).padStart(4,'0')} — ${req.service_type}`)}
-                  style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px', background: '#131e2e', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.04)', cursor: 'pointer' }}>
-                  <div>
-                    <div style={{ fontSize: '12px', fontWeight: '600', color: '#e2e8f0', marginBottom: '2px' }}>INV-{String(req.id).padStart(4,'0')}</div>
-                    <div style={{ fontSize: '10px', color: '#64748b' }}>{req.service_type}</div>
-                  </div>
-                  <div style={{ textAlign: 'right' }}>
-                    <div style={{ fontSize: '11px', color: '#94a3b8', marginBottom: '3px' }}>{new Date(req.request_date).toLocaleDateString()}</div>
-                    <span style={{ fontSize: '10px', background: 'rgba(16,185,129,0.15)', color: '#10b981', padding: '2px 8px', borderRadius: '4px' }}>Completed</span>
-                  </div>
-                </motion.div>
-              ))}
-              {requests.filter(r => r.status === 'COMPLETED').length === 0 && <div style={{ textAlign: 'center', padding: '20px', color: '#475569', fontSize: '12px' }}>No completed invoices yet</div>}
+              {(() => {
+                const completedOrPaid = requests.filter(r => r.status === 'COMPLETED' || r.status === 'PAID');
+                return completedOrPaid.slice(0, 3).map((req) => {
+                  const payment = payments.find(p => p.service_request_id === req.id || p.service_id === req.id);
+                  const isPaid = req.status === 'PAID' || (payment && (payment.payment_status === 'PAID' || payment.payment_status === 'SUCCESS'));
+                  return (
+                    <motion.div key={req.id} whileHover={{ x: 3 }}
+                      onClick={() => {
+                        const token = localStorage.getItem('token');
+                        if (isPaid && payment) {
+                          window.open(`http://localhost:8000/payments/invoice/${payment.id}/pdf?token=${token}`, '_blank');
+                        } else {
+                          window.location.href = `http://localhost:8000/payments/bill-summary?service_id=${req.id}&token=${token}`;
+                        }
+                      }}
+                      style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px', background: '#131e2e', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.04)', cursor: 'pointer' }}>
+                      <div>
+                        <div style={{ fontSize: '12px', fontWeight: '600', color: '#e2e8f0', marginBottom: '2px' }}>{payment ? payment.invoice_number : `SR-${String(req.id).padStart(4,'0')}`}</div>
+                        <div style={{ fontSize: '10px', color: '#64748b' }}>{req.service_type}</div>
+                      </div>
+                      <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
+                        <div style={{ fontSize: '11px', color: '#94a3b8' }}>{new Date(req.request_date).toLocaleDateString()}</div>
+                        <span style={{ fontSize: '10px', background: isPaid ? 'rgba(16,185,129,0.15)' : 'rgba(245,158,11,0.15)', color: isPaid ? '#10b981' : '#f59e0b', padding: '2px 8px', borderRadius: '4px', fontWeight: '600' }}>
+                          {isPaid ? 'Paid' : 'Pay Now'}
+                        </span>
+                      </div>
+                    </motion.div>
+                  );
+                });
+              })()}
+              {requests.filter(r => r.status === 'COMPLETED' || r.status === 'PAID').length === 0 && <div style={{ textAlign: 'center', padding: '20px', color: '#475569', fontSize: '12px' }}>No completed invoices yet</div>}
             </div>
           </div>
         </div>
